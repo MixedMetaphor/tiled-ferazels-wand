@@ -1,0 +1,16 @@
+{
+  "name": "tiled-ferazels-wand",
+  "version": "1.0.0",
+  "description": "tiled support for ferazel's wand level files",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "ferazels-wand.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "@mapeditor/tiled-api": "^1.12.0",
+    "typescript": "^7.0.2"
+  }
+}
