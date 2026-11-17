@@ -1,5 +1,5 @@
 {
-  "include": ["ferazels-wand.ts"],
+  "files": ["ferazels-wand.ts"],
   "compilerOptions": {
     "types": ["@mapeditor/tiled-api"],
   },
