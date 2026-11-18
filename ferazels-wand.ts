@@ -1,10 +1,60 @@
+type LevelSpriteData = {
+  valid: number;
+  kind: number;
+  info: [number];
+  where: [number, number];
+}
+
+type LevelData = {
+  levelName: string;
+  levelNum: number;
+  flags: [number];
+  info: [number];
+  startingPos: [number, number];
+  music: number;
+  pxBackTilesetID: number;
+  pxMidTilesetID: number;
+  fgTilesetID: number;
+  bgTilesetID: number;
+  fgPatternTilesetID: number;
+  fgOverlayTilesetID: number;
+  spriteClutID: number;
+  tileClutID: number;
+  comboClutID: number;
+  fgTileDefs: [number];
+  bgTileDefs: [number];
+  pxBackRowScrollSpeeds: [number];
+  pxMidRowScrollSpeeds: [number];
+  pxBackBaseScrollSpeed: number;
+  pxMidBaseScrollSpeed: number;
+  pxBackBaseSpeedH: number;
+  pxBackBaseSpeedV: number;
+  pxMidBaseSpeedH: number;
+  pxMidBaseSpeedV: number;
+  pxBackTileMapSizeH: number;
+  pxBackTileMapSizeV: number;
+  pxMidTileMapSizeH: number;
+  pxMidTileMapSizeV: number;
+  mainTileMapSizeH: number;
+  mainTileMapSizeV: number;
+  pxBackTileMap: [number];
+  pxMidTileMap: [number];
+  bgTileMap: [number];
+  fgTileMap: [number];
+  fgOverlayTileMap: [number];
+  sprites: [LevelSpriteData];
+}
+
 function fwRead(filename: string): TileMap {
   let f = new TextFile(filename);
-  let data = JSON.parse(f.readAll());
+  let data: LevelData = JSON.parse(f.readAll());
 
   // not great
   let dirname = filename.replace(/\/[^/]+$/, "/");
-  let worldData = dirname.concat('../../');
+  let worldData = Qt.resolvedUrl(dirname.concat('../../'));
+  let worldDataFile = (path) => {
+    return new URL(path, worldData.toString()).pathname;
+  };
 
   let tm = new TileMap();
   tm.setSize(data.mainTileMapSizeH, data.mainTileMapSizeV);
@@ -29,7 +79,7 @@ function fwRead(filename: string): TileMap {
   let mainTileMapSize = [data.mainTileMapSizeH, data.mainTileMapSizeV]
   let bg = new Tileset("Background");
   bg.setTileSize(32, 32);
-  bg.imageFileName = worldData.concat(`sprites/${data.bgTilesetID}.png`);
+  bg.imageFileName = worldDataFile(`sprites/${data.bgTilesetID}.png`);
   data.bgTileDefs.forEach((d, e) => {
     bg.tile(e).setProperty('Tiledef', d);
   });
@@ -44,7 +94,7 @@ function fwRead(filename: string): TileMap {
 
   let fg = new Tileset("Foreground");
   fg.setTileSize(32, 32);
-  fg.imageFileName = worldData.concat(`sprites/${data.fgTilesetID}.png`);
+  fg.imageFileName = worldDataFile(`sprites/${data.fgTilesetID}.png`);
   data.fgTileDefs.forEach((d, e) => {
     fg.tile(e).setProperty('Tiledef', d);
   });
@@ -61,8 +111,8 @@ function fwRead(filename: string): TileMap {
   if (data.fgOverlayTilesetID != 0 && data.fgOverlayTilesetID != data.fgTilesetID) {
     fgo = new Tileset("Foreground overlay");
     fgo.setTileSize(32, 32);
-    fgo.imageFileName = worldData.concat(`sprites/${data.fgOverlayTilesetID}.png`);
-    tm.addTileset(fgo);
+    fgo.imageFileName = worldDataFile(`sprites/${data.fgOverlayTilesetID}.png`);
+   tm.addTileset(fgo);
   } else {
     fgo = fg;
   }
@@ -76,7 +126,7 @@ function fwRead(filename: string): TileMap {
   if (data.fgPatternTilesetID != 0) {
     let fgp = new Tileset("Foreground pattern");
     fgp.setTileSize(32, 32);
-    fgp.imageFileName = worldData.concat(`sprites/${data.fgPatternTilesetID}.png`);
+    fgp.imageFileName = worldDataFile(`sprites/${data.fgPatternTilesetID}.png`);
     tm.addTileset(fgp);
     let fgpl = new TileLayer("Foreground pattern");
     loopTileMapLayer(fgpl, data.fgTileMap, mainTileMapSize, (t, e) => {
@@ -95,6 +145,31 @@ function fwRead(filename: string): TileMap {
   } else {
     tm.addLayer(fgol);
   }
+
+  let spl = new ObjectGroup("Sprites");
+  let sps = new Tileset("Sprites");
+  let spsMap = new Map();
+  data.sprites.forEach((sprite, id) => {
+    if (sprite.valid == 0) { return; }
+    var spt = spsMap.get(sprite.kind);
+    if (spt === undefined) {
+      spt = sps.addTile();
+      spt.imageFileName = worldDataFile(`editor-sprites/${sprite.kind}.png`);
+      spsMap.set(sprite.kind, spt);
+    }
+    let obj = new MapObject();
+    obj.tile = spt;
+    obj.pos = { x: sprite.where[1], y: sprite.where[0] + spt.size.height };
+    obj.size = spt.size;
+    obj.setProperty('id', id);
+    obj.setProperty('validity', sprite.valid);
+    sprite.info.forEach((i, e) => {
+      obj.setProperty(`info[${e}]`, i);
+    });
+    spl.addObject(obj);
+  });
+  tm.addTileset(sps);
+  tm.addLayer(spl);
 
   return tm;
 }
