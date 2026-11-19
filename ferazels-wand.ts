@@ -222,6 +222,9 @@ function fwWrite(tm: TileMap, filename: string): string | undefined {
   }
   let data: LevelData = JSON.parse(dataJsonString);
 
+  data.levelName = tm.resolvedProperty("Level name");
+  data.music = tm.resolvedProperty("Music track");
+
   for (const layer of tm.layers) {
     switch (layer.name) {
       case "Foreground":
