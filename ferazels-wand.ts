@@ -62,15 +62,15 @@ function fwRead(filename: string): TileMap {
   tm.setProperty('Level name', data.levelName);
   tm.setProperty('Music track', data.music);
 
-  let loopTileMapLayer: ((layer: TileLayer, tilemap: [number], [tileMapSizeH, tileMapSizeV]: [number, number], callback: (t: number, e: number) => Tile | null) => void) = (layer, tilemap, [tileMapSizeH, tileMapSizeV], callback) => {
+  let loopTileMapLayer: ((layer: TileLayer, tilemap: [number], [tileMapSizeH, tileMapSizeV]: [number, number], callback: (t: number, x: number, y: number) => Tile | null) => void) = (layer, tilemap, [tileMapSizeH, tileMapSizeV], callback) => {
     let edit = layer.edit();
     tilemap.forEach((t, e) => {
-      let tile = callback(t, e);
+      let x = e % tileMapSizeH;
+      let y = Math.floor(e / tileMapSizeH);
+      let tile = callback(t, x, y);
       if (tile === null) {
         return;
       }
-      let x = e % tileMapSizeH;
-      let y = Math.floor(e / tileMapSizeH);
       edit.setTile(x, y, tile);
     });
     edit.apply();
@@ -128,18 +128,23 @@ function fwRead(filename: string): TileMap {
     fgp.setTileSize(32, 32);
     fgp.imageFileName = worldDataFile(`sprites/${data.fgPatternTilesetID}.png`);
     tm.addTileset(fgp);
+    let patternSize = data.flags[5] == 0? 8 : 6;
+    let fgpTile = (x: number, y: number) => {
+      return fgp.tile(x % patternSize + y % patternSize * patternSize);
+    };
+
     let fgpl = new TileLayer("Foreground pattern");
-    loopTileMapLayer(fgpl, data.fgTileMap, mainTileMapSize, (t, e) => {
+    loopTileMapLayer(fgpl, data.fgTileMap, mainTileMapSize, (t, x, y) => {
       let fgt = t & 0xff;
-      return fgt == 96? fgp.tile(e % 36) : null;
+      return fgt == 96? fgpTile(x, y) : null;
     });
     tm.addLayer(fgpl);
     tm.addLayer(fgol);
 
     let fgopl = new TileLayer("Foreground overlay pattern");
-    loopTileMapLayer(fgopl, data.fgOverlayTileMap, mainTileMapSize, (t, e) => {
+    loopTileMapLayer(fgopl, data.fgOverlayTileMap, mainTileMapSize, (t, x, y) => {
       let fgt = t >> 8;
-      return fgt == 96? fgp.tile(e % 36) : null;
+      return fgt == 96? fgpTile(x, y) : null;
     });
     tm.addLayer(fgopl);
   } else {
