@@ -244,12 +244,14 @@ function fwWrite(tm: TileMap, filename: string): string | undefined {
   data.flags = tm.resolvedProperty("Level flags");
 
   for (const layer of tm.layers) {
+    const tileLayer = <TileLayer>layer;
+    const objectLayer = <ObjectGroup>layer;
     switch (layer.name) {
       case "Foreground":
         data.fgTileMap = data.fgTileMap.map((t, e) => {
           let x = e % data.mainTileMapSizeH;
           let y = Math.floor(e / data.mainTileMapSizeH);
-          let tile = layer.tileAt(x, y);
+          let tile = tileLayer.tileAt(x, y);
           let fgt = tile !== null ? tile.id + 1 : 0;
           return (t & ~0xff) | fgt;
         });
@@ -259,7 +261,7 @@ function fwWrite(tm: TileMap, filename: string): string | undefined {
         data.fgTileMap = data.fgTileMap.map((t, e) => {
           let x = e % data.mainTileMapSizeH;
           let y = Math.floor(e / data.mainTileMapSizeH);
-          let tile = layer.tileAt(x, y);
+          let tile = tileLayer.tileAt(x, y);
           var crt = 0;
           if (tile !== null) {
             crt = tile.id;
@@ -279,15 +281,15 @@ function fwWrite(tm: TileMap, filename: string): string | undefined {
         data.bgTileMap = data.bgTileMap.map((t, e) => {
           let x = e % data.mainTileMapSizeH;
           let y = Math.floor(e / data.mainTileMapSizeH);
-          let tile = layer.tileAt(x, y);
+          let tile = tileLayer.tileAt(x, y);
           let bgt = tile !== null ? tile.id + 1 : 0;
           return (t & ~0xff) | bgt;
         });
         break;
 
       case "Sprites":
-        let spritesMap = new Map();
-        for (const obj of layer.objects) {
+        let spritesMap = new Map<number, MapObject>();
+        for (const obj of objectLayer.objects) {
           let id = obj.resolvedProperty("id");
           if (id === undefined) continue;
           spritesMap.set(id, obj);
@@ -307,7 +309,7 @@ function fwWrite(tm: TileMap, filename: string): string | undefined {
         break;
 
       case "Meta":
-        for (const obj of layer.objects) {
+        for (const obj of objectLayer.objects) {
           switch (obj.name) {
             case "Starting position":
               data.startingPos = [Math.floor(obj.y), Math.floor(obj.x)];
