@@ -213,6 +213,8 @@ function fwRead(filename: string): TileMap {
   return tm;
 }
 
+// TODO: handle tilemap layer resize
+
 function fwWrite(tm: TileMap, filename: string): string | undefined {
   let dataJsonString = tm.property("Original JSON data");
   if (typeof dataJsonString !== "string") {
