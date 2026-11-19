@@ -169,6 +169,19 @@ function fwRead(filename: string): TileMap {
     tm.addLayer(fgol);
   }
 
+  let cr = new Tileset("Crunch tiles");
+  cr.setTileSize(32, 32);
+  cr.imageFileName = worldDataFile("editor/crunch-tiles.png");
+  tm.addTileset(cr);
+
+  let crl = new TileLayer("Crunch tiles");
+  crl.offset = Qt.point(16, 16);
+  loopTileMapLayer(crl, data.fgTileMap, mainTileMapSize, (t) => {
+    let crt = t >> 8;
+    return (crt & 0xf0) == 0 ? null : cr.tile(crt & 0xf);
+  });
+  tm.addLayer(crl);
+
   let spl = new ObjectGroup("Sprites");
   let sps = new Tileset("Sprites");
   let spsMap = new Map();
@@ -179,7 +192,7 @@ function fwRead(filename: string): TileMap {
     var spt = spsMap.get(sprite.kind);
     if (spt === undefined) {
       spt = sps.addTile();
-      spt.imageFileName = worldDataFile(`editor-sprites/${sprite.kind}.png`);
+      spt.imageFileName = worldDataFile(`editor/${sprite.kind}.png`);
       spsMap.set(sprite.kind, spt);
     }
     let obj = new MapObject();
@@ -216,6 +229,26 @@ function fwWrite(tm: TileMap, filename: string): string | undefined {
           let tile = layer.tileAt(x, y);
           let fgt = tile !== null ? tile.id + 1 : 0;
           return (t & ~0xff) | fgt;
+        });
+        break;
+
+      case "Crunch tiles":
+        data.fgTileMap = data.fgTileMap.map((t, e) => {
+          let x = e % data.mainTileMapSizeH;
+          let y = Math.floor(e / data.mainTileMapSizeH);
+          let tile = layer.tileAt(x, y);
+          var crt = 0;
+          if (tile !== null) {
+            crt = tile.id;
+            // preserve original 'crunch direction' nybble if present
+            let dir = (t >> 8) & 0xf0;
+            if (dir != 0) {
+              crt |= dir;
+            } else {
+              crt |= 0x10;
+            }
+          }
+          return (t & ~0xff00) | (crt << 8);
         });
         break;
 
