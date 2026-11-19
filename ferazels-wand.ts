@@ -176,8 +176,12 @@ function fwRead(filename: string): TileMap {
 
   let crl = new TileLayer("Crunch tiles");
   crl.offset = Qt.point(16, 16);
-  loopTileMapLayer(crl, data.fgTileMap, mainTileMapSize, (t) => {
+  loopTileMapLayer(crl, data.fgTileMap, mainTileMapSize, (t, x, y) => {
     let crt = t >> 8;
+    if ((crt & 0xf) > 4) {
+      tiled.warn(`ignoring bogus crunch tile ${crt} @ (${x}, ${y})`, () => {});
+      return null;
+    }
     return (crt & 0xf0) == 0 ? null : cr.tile(crt & 0xf);
   });
   tm.addLayer(crl);
