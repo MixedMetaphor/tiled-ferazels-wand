@@ -132,6 +132,9 @@ function fwRead(filename: string): TileMap {
 
   let fgol = new TileLayer("Foreground overlay");
   loopTileMapLayer(fgol, data.fgOverlayTileMap, mainTileMapSize, (t) => {
+    if ((t & 0xff) != 101) {
+      return null;
+    }
     let fgt = t >> 8;
     return fgt == 0 ? null : fgo.tile(fgt - 1);
   });
@@ -160,6 +163,9 @@ function fwRead(filename: string): TileMap {
       data.fgOverlayTileMap,
       mainTileMapSize,
       (t, x, y) => {
+        if ((t & 0xff) != 101) {
+          return null;
+        }
         let fgt = t >> 8;
         return fgt == 96 ? fgpTile(x, y) : null;
       },
