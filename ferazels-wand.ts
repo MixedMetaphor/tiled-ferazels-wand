@@ -60,9 +60,11 @@ function fwRead(filename: string): TileMap {
   let tm = new TileMap();
   tm.setSize(data.mainTileMapSizeH, data.mainTileMapSizeV);
   tm.setTileSize(32, 32);
+  tm.setProperty("Original JSON data", dataJsonString);
   tm.setProperty("Level name", data.levelName);
   tm.setProperty("Music track", data.music);
-  tm.setProperty("Original JSON data", dataJsonString);
+  tm.setProperty("Level info", data.info);
+  tm.setProperty("Level flags", data.flags);
 
   let loopTileMapLayer: (
     layer: TileLayer,
@@ -212,9 +214,7 @@ function fwRead(filename: string): TileMap {
     obj.setProperty("id", id);
     obj.setProperty("kind", sprite.kind);
     obj.setProperty("validity", sprite.valid);
-    sprite.info.forEach((i, e) => {
-      obj.setProperty(`info[${e}]`, i);
-    });
+    obj.setProperty("info", sprite.info);
     spl.addObject(obj);
   });
   tm.addTileset(sps);
@@ -240,6 +240,8 @@ function fwWrite(tm: TileMap, filename: string): string | undefined {
 
   data.levelName = tm.resolvedProperty("Level name");
   data.music = tm.resolvedProperty("Music track");
+  data.info = tm.resolvedProperty("Level info");
+  data.flags = tm.resolvedProperty("Level flags");
 
   for (const layer of tm.layers) {
     switch (layer.name) {
@@ -298,10 +300,8 @@ function fwWrite(tm: TileMap, filename: string): string | undefined {
           }
           s.kind = obj.resolvedProperty("kind");
           s.valid = obj.resolvedProperty("validity");
+          s.info = obj.resolvedProperty("info");
           s.where = [Math.floor(obj.y - obj.size.height), Math.floor(obj.x)];
-          s.info = s.info.map((_, e) => {
-            return obj.resolvedProperty(`info[${e}]`);
-          });
           return s;
         });
         break;
