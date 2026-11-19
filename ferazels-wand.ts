@@ -187,6 +187,7 @@ function fwRead(filename: string): TileMap {
     obj.pos = { x: sprite.where[1], y: sprite.where[0] + spt.size.height };
     obj.size = spt.size;
     obj.setProperty("id", id);
+    obj.setProperty("kind", sprite.kind);
     obj.setProperty("validity", sprite.valid);
     sprite.info.forEach((i, e) => {
       obj.setProperty(`info[${e}]`, i);
@@ -229,6 +230,25 @@ function fwWrite(tm: TileMap, filename: string): string | undefined {
         break;
 
       case "Sprites":
+        let spritesMap = new Map();
+        for (const obj of layer.objects) {
+          let id = obj.resolvedProperty("id");
+          if (id === undefined) continue;
+          spritesMap.set(id, obj);
+        }
+        data.sprites = data.sprites.map((s, e) => {
+          let obj = spritesMap.get(e);
+          if (obj === undefined) {
+            s.valid = 0;
+            return s;
+          }
+          s.kind = obj.resolvedProperty("kind");
+          s.valid = obj.resolvedProperty("validity");
+          s.info = s.info.map((_, e) => {
+            return obj.resolvedProperty(`info[${e}]`);
+          });
+          return s;
+        });
         break;
     }
   }
