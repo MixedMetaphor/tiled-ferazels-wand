@@ -220,6 +220,12 @@ function fwRead(filename: string): TileMap {
   tm.addTileset(sps);
   tm.addLayer(spl);
 
+  let ml = new ObjectGroup("Meta");
+  let start = new MapObject(MapObject.Point, "Starting position");
+  start.pos = Qt.point(data.startingPos[1], data.startingPos[0]);
+  ml.addObject(start);
+  tm.addLayer(ml);
+
   return tm;
 }
 
@@ -298,6 +304,16 @@ function fwWrite(tm: TileMap, filename: string): string | undefined {
           });
           return s;
         });
+        break;
+
+      case "Meta":
+        for (const obj of layer.objects) {
+          switch (obj.name) {
+            case "Starting position":
+              data.startingPos = [Math.floor(obj.y), Math.floor(obj.x)];
+              break;
+          }
+        }
         break;
     }
   }
