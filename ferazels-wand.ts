@@ -1,15 +1,15 @@
 type LevelSpriteData = {
   valid: number;
   kind: number;
-  info: [number];
+  info: number[];
   where: [number, number];
 };
 
 type LevelData = {
   levelName: string;
   levelNum: number;
-  flags: [number];
-  info: [number];
+  flags: number[];
+  info: number[];
   startingPos: [number, number];
   music: number;
   pxBackTilesetID: number;
@@ -21,10 +21,10 @@ type LevelData = {
   spriteClutID: number;
   tileClutID: number;
   comboClutID: number;
-  fgTileDefs: [number];
-  bgTileDefs: [number];
-  pxBackRowScrollSpeeds: [number];
-  pxMidRowScrollSpeeds: [number];
+  fgTileDefs: number[];
+  bgTileDefs: number[];
+  pxBackRowScrollSpeeds: number[];
+  pxMidRowScrollSpeeds: number[];
   pxBackBaseScrollSpeed: number;
   pxMidBaseScrollSpeed: number;
   pxBackBaseSpeedH: number;
@@ -37,12 +37,12 @@ type LevelData = {
   pxMidTileMapSizeV: number;
   mainTileMapSizeH: number;
   mainTileMapSizeV: number;
-  pxBackTileMap: [number];
-  pxMidTileMap: [number];
-  bgTileMap: [number];
-  fgTileMap: [number];
-  fgOverlayTileMap: [number];
-  sprites: [LevelSpriteData];
+  pxBackTileMap: number[];
+  pxMidTileMap: number[];
+  bgTileMap: number[];
+  fgTileMap: number[];
+  fgOverlayTileMap: number[];
+  sprites: LevelSpriteData[];
 };
 
 function fwRead(filename: string): TileMap {
@@ -52,7 +52,7 @@ function fwRead(filename: string): TileMap {
   // not great
   let dirname = filename.replace(/\/[^/]+$/, "/");
   let worldData = Qt.resolvedUrl(dirname.concat("../../"));
-  let worldDataFile = (path) => {
+  let worldDataFile = (path: string) => {
     return new URL(path, worldData.toString()).pathname;
   };
 
@@ -64,7 +64,7 @@ function fwRead(filename: string): TileMap {
 
   let loopTileMapLayer: (
     layer: TileLayer,
-    tilemap: [number],
+    tilemap: number[],
     [tileMapSizeH, tileMapSizeV]: [number, number],
     callback: (t: number, x: number, y: number) => Tile | null,
   ) => void = (layer, tilemap, [tileMapSizeH, tileMapSizeV], callback) => {
@@ -81,7 +81,10 @@ function fwRead(filename: string): TileMap {
     edit.apply();
   };
 
-  let mainTileMapSize = [data.mainTileMapSizeH, data.mainTileMapSizeV];
+  let mainTileMapSize: [number, number] = [
+    data.mainTileMapSizeH,
+    data.mainTileMapSizeV,
+  ];
   let bg = new Tileset("Background");
   bg.setTileSize(32, 32);
   bg.imageFileName = worldDataFile(`sprites/${data.bgTilesetID}.png`);

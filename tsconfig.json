@@ -2,5 +2,6 @@
   "files": ["ferazels-wand.ts"],
   "compilerOptions": {
     "types": ["@mapeditor/tiled-api"],
+    "lib": ["ES2019"],
   },
 }
