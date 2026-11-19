@@ -47,7 +47,8 @@ type LevelData = {
 
 function fwRead(filename: string): TileMap {
   let f = new TextFile(filename);
-  let data: LevelData = JSON.parse(f.readAll());
+  let dataJsonString = f.readAll();
+  let data: LevelData = JSON.parse(dataJsonString);
 
   // not great
   let dirname = filename.replace(/\/[^/]+$/, "/");
@@ -61,6 +62,7 @@ function fwRead(filename: string): TileMap {
   tm.setTileSize(32, 32);
   tm.setProperty("Level name", data.levelName);
   tm.setProperty("Music track", data.music);
+  tm.setProperty("Original JSON data", dataJsonString);
 
   let loopTileMapLayer: (
     layer: TileLayer,
@@ -197,8 +199,49 @@ function fwRead(filename: string): TileMap {
   return tm;
 }
 
-tiled.registerMapFormat("Ferazel's Wand", {
+function fwWrite(tm: TileMap, filename: string): string | undefined {
+  let dataJsonString = tm.property("Original JSON data");
+  if (typeof dataJsonString !== "string") {
+    return "expected JSON data is not a string";
+  }
+  let data: LevelData = JSON.parse(dataJsonString);
+
+  for (const layer of tm.layers) {
+    switch (layer.name) {
+      case "Foreground":
+        data.fgTileMap = data.fgTileMap.map((t, e) => {
+          let x = e % data.mainTileMapSizeH;
+          let y = Math.floor(e / data.mainTileMapSizeH);
+          let tile = layer.tileAt(x, y);
+          let fgt = tile !== null ? tile.id + 1 : 0;
+          return (t & ~0xff) | fgt;
+        });
+        break;
+
+      case "Background":
+        data.bgTileMap = data.bgTileMap.map((t, e) => {
+          let x = e % data.mainTileMapSizeH;
+          let y = Math.floor(e / data.mainTileMapSizeH);
+          let tile = layer.tileAt(x, y);
+          let bgt = tile !== null ? tile.id + 1 : 0;
+          return (t & ~0xff) | bgt;
+        });
+        break;
+
+      case "Sprites":
+        break;
+    }
+  }
+
+  let f = new TextFile(filename, TextFile.WriteOnly);
+  f.write(JSON.stringify(data));
+  f.commit();
+  return;
+}
+
+tiled.registerMapFormat("ferazels-wand", {
   extension: "json",
   name: "Ferazel's Wand level data",
   read: fwRead,
+  write: fwWrite,
 });
