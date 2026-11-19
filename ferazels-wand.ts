@@ -66,6 +66,70 @@ function fwRead(filename: string): TileMap {
   tm.setProperty("Level info", data.info);
   tm.setProperty("Level flags", data.flags);
 
+  let loopParallaxTileMapLayer: (
+    tm: TileMap,
+    tilemap: number[],
+    baseScrollSpeed: number,
+    rowScrollSpeeds: number[],
+    [tileMapSizeH, tileMapSizeV]: [number, number],
+    tileset: Tileset,
+  ) => void = (
+    tm,
+    tilemap,
+    baseScrollSpeed,
+    rowScrollSpeeds,
+    [tileMapSizeH, tileMapSizeV],
+    tileset,
+  ) => {
+    let tilesetWidth = Math.floor(tileset.imageSize.width / 128);
+    let editMap = new Map<number, TileLayerEdit>();
+    let makeLayer = (rowSpeed: number) => {
+      let layer = new TileLayer("Parallax background");
+      layer.size = Qt.size(tileMapSizeH * 4, tileMapSizeV * 4);
+      layer.parallaxFactor = Qt.point(rowSpeed / 256, baseScrollSpeed / 256);
+      tm.addLayer(layer);
+      return layer.edit();
+    };
+    let getEdit = (row: number) => {
+      let rowSpeed = rowScrollSpeeds[row];
+      let edit = editMap.get(rowSpeed);
+      if (edit === undefined) {
+        edit = makeLayer(rowSpeed);
+        editMap.set(rowSpeed, edit);
+      }
+      return edit;
+    };
+    tilemap.forEach((t, e) => {
+      let tx = t % tilesetWidth;
+      let ty = Math.floor(t / tilesetWidth);
+      let x = (e % tileMapSizeH) * 4;
+      let ey = Math.floor(e / tileMapSizeH);
+      let ymin = ey * 4;
+      for (var i = 0; i < 4; i += 1) {
+        let row = (ty * 4 + i) * 32;
+        const tile = tx + (ty * 4 + i) * tilesetWidth;
+        getEdit(row).setTile(x, ymin + i, tileset.tile(tile));
+      }
+    });
+    for (const edit of editMap.values()) {
+      edit.apply();
+    }
+  };
+
+  let pxb = new Tileset("Parallax background");
+  pxb.setTileSize(128, 32);
+  pxb.imageFileName = worldDataFile(`sprites/${data.pxBackTilesetID}.png`);
+  tm.addTileset(pxb);
+
+  loopParallaxTileMapLayer(
+    tm,
+    data.pxBackTileMap,
+    data.pxBackBaseScrollSpeed,
+    data.pxBackRowScrollSpeeds,
+    [data.pxBackTileMapSizeH, data.pxBackTileMapSizeV],
+    pxb,
+  );
+
   let loopTileMapLayer: (
     layer: TileLayer,
     tilemap: number[],
