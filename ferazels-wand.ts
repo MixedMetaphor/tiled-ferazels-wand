@@ -184,7 +184,7 @@ function fwRead(filename: string): TileMap {
     }
     let obj = new MapObject();
     obj.tile = spt;
-    obj.pos = { x: sprite.where[1], y: sprite.where[0] + spt.size.height };
+    obj.pos = Qt.point(sprite.where[1], sprite.where[0] + spt.size.height);
     obj.size = spt.size;
     obj.setProperty("id", id);
     obj.setProperty("kind", sprite.kind);
@@ -244,6 +244,7 @@ function fwWrite(tm: TileMap, filename: string): string | undefined {
           }
           s.kind = obj.resolvedProperty("kind");
           s.valid = obj.resolvedProperty("validity");
+          s.where = [Math.floor(obj.y - obj.size.height), Math.floor(obj.x)];
           s.info = s.info.map((_, e) => {
             return obj.resolvedProperty(`info[${e}]`);
           });
