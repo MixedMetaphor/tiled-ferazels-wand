@@ -313,19 +313,21 @@ function fwRead(filename: string): TileMap {
   tm.addTileset(sps);
   tm.addLayer(spl);
 
-  let pxm = new Tileset("Parallax middle");
-  pxm.setTileSize(128, 128);
-  pxm.imageFileName = worldDataFile(`sprites/${data.pxMidTilesetID}.png`);
-  tm.addTileset(pxm);
+  if (data.pxMidTilesetID !== 0) {
+    let pxm = new Tileset("Parallax middle");
+    pxm.setTileSize(128, 128);
+    pxm.imageFileName = worldDataFile(`sprites/${data.pxMidTilesetID}.png`);
+    tm.addTileset(pxm);
 
-  loopParallaxTileMapLayer(
-    tm,
-    data.pxMidTileMap,
-    data.pxMidBaseScrollSpeed,
-    data.pxMidRowScrollSpeeds,
-    [data.pxMidTileMapSizeH, data.pxMidTileMapSizeV],
-    pxm,
-  );
+    loopParallaxTileMapLayer(
+      tm,
+      data.pxMidTileMap,
+      data.pxMidBaseScrollSpeed,
+      data.pxMidRowScrollSpeeds,
+      [data.pxMidTileMapSizeH, data.pxMidTileMapSizeV],
+      pxm,
+    );
+  }
 
   let ml = new ObjectGroup("Meta");
   let start = new MapObject(MapObject.Point, "Starting position");
