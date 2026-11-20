@@ -83,10 +83,12 @@ function fwRead(filename: string): TileMap {
   ) => {
     let tilesetWidth = Math.floor(tileset.imageSize.width / 128);
     let editMap = new Map<number, TileLayerEdit>();
+    var skip = 0;
     let makeLayer = (rowSpeed: number) => {
-      let layer = new TileLayer("Parallax background");
+      let layer = new TileLayer(tileset.name);
       layer.size = Qt.size(tileMapSizeH * 4, tileMapSizeV * 4);
       layer.parallaxFactor = Qt.point(rowSpeed / 256, baseScrollSpeed / 256);
+      layer.offset = Qt.point(0, (skip / tileMapSizeH) * 32);
       tm.addLayer(layer);
       return layer.edit();
     };
@@ -100,15 +102,18 @@ function fwRead(filename: string): TileMap {
       return edit;
     };
     tilemap.forEach((t, e) => {
+      if (t < 0) {
+        skip += 1;
+        return;
+      }
       let tx = t % tilesetWidth;
       let ty = Math.floor(t / tilesetWidth);
+      e -= skip;
       let x = (e % tileMapSizeH) * 4;
-      let ey = Math.floor(e / tileMapSizeH);
-      let ymin = ey * 4;
-      for (var i = 0; i < 4; i += 1) {
-        let row = (ty * 4 + i) * 32;
-        const tile = tx + (ty * 4 + i) * tilesetWidth;
-        getEdit(row).setTile(x, ymin + i, tileset.tile(tile));
+      let y = Math.floor(e / tileMapSizeH) * 4 + 3;
+      let rowmin = ty * 128;
+      for (var i = 0; i < 128; i += 1) {
+        getEdit(rowmin + i).setTile(x, y, tileset.tile(t));
       }
     });
     for (const edit of editMap.values()) {
@@ -117,7 +122,7 @@ function fwRead(filename: string): TileMap {
   };
 
   let pxb = new Tileset("Parallax background");
-  pxb.setTileSize(128, 32);
+  pxb.setTileSize(128, 128);
   pxb.imageFileName = worldDataFile(`sprites/${data.pxBackTilesetID}.png`);
   tm.addTileset(pxb);
 
@@ -283,6 +288,20 @@ function fwRead(filename: string): TileMap {
   });
   tm.addTileset(sps);
   tm.addLayer(spl);
+
+  let pxm = new Tileset("Parallax middle");
+  pxm.setTileSize(128, 128);
+  pxm.imageFileName = worldDataFile(`sprites/${data.pxMidTilesetID}.png`);
+  tm.addTileset(pxm);
+
+  loopParallaxTileMapLayer(
+    tm,
+    data.pxMidTileMap,
+    data.pxMidBaseScrollSpeed,
+    data.pxMidRowScrollSpeeds,
+    [data.pxMidTileMapSizeH, data.pxMidTileMapSizeV],
+    pxm,
+  );
 
   let ml = new ObjectGroup("Meta");
   let start = new MapObject(MapObject.Point, "Starting position");
