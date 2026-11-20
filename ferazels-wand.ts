@@ -263,6 +263,30 @@ function fwRead(filename: string): TileMap {
   });
   tm.addLayer(crl);
 
+  let wd = new Tileset("Wind direction");
+  wd.setTileSize(32, 32);
+  wd.imageFileName = worldDataFile("editor/wind-direction.png");
+  tm.addTileset(wd);
+
+  let wdl = new TileLayer("Wind direction");
+  loopTileMapLayer(wdl, data.fgOverlayTileMap, mainTileMapSize, (t, x, y) => {
+    let wdt = (t & 0xff) - 1;
+    return wdt < 0 || wdt >= 36 ? null : wd.tile(wdt);
+  });
+  tm.addLayer(wdl);
+
+  let ws = new Tileset("Wind strength");
+  ws.setTileSize(32, 32);
+  ws.imageFileName = worldDataFile("editor/wind-strength.png");
+  tm.addTileset(ws);
+
+  let wsl = new TileLayer("Wind strength");
+  loopTileMapLayer(wsl, data.fgOverlayTileMap, mainTileMapSize, (t, x, y) => {
+    let wst = (t >> 8) - 1;
+    return wst < 0 ? null : ws.tile(Math.floor(wst / 4));
+  });
+  tm.addLayer(wsl);
+
   let spl = new ObjectGroup("Sprites");
   let sps = new Tileset("Sprites");
   let spsMap = new Map();
